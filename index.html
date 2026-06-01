@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>但馬屋餐廳平面圖</title>
+    <style>
+        body {
+            font-family: "PingFang HK", "Microsoft JhengHei", sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overscroll-behavior: none; /* 防止 iPad 橡皮筋滾動效果 */
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        /* 工具箱區域 */
+        #toolbox {
+            width: 90%;
+            max-width: 800px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 20px;
+            z-index: 10;
+        }
+
+        .toolbox-label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        /* 餐廳平面圖區域 */
+        #floor-plan {
+            width: 90%;
+            max-width: 800px;
+            height: 600px;
+            background-color: #fff;
+            border: 2px solid #999;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        /* 上方玻璃窗 */
+        #window-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background-color: rgba(135, 206, 235, 0.4); 
+            border-bottom: 2px solid #87CEEB;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #005f87;
+            font-weight: bold;
+            letter-spacing: 10px;
+            pointer-events: none; /* 確保不阻擋桌椅拖放 */
+            z-index: 1;
+        }
+
+        /* 左側食物區 */
+        #food-area {
+            position: absolute;
+            top: 40px; 
+            left: 0;
+            width: 100px;
+            /* 高度扣除玻璃窗(40px)和下方的門口高度(80px) */
+            height: calc(100% - 120px); 
+            background-color: #FFF3E0; 
+            border-right: 2px dashed #FFB74D;
+            border-bottom: 2px dashed #FFB74D; /* 底部加上線條與門口區隔 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #E65100;
+            font-weight: bold;
+            font-size: 18px;
+            writing-mode: vertical-rl; 
+            letter-spacing: 8px;
+            pointer-events: none; 
+            z-index: 1;
+        }
+
+        /* 左下角扇形門口 */
+        #door-area {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 80px; /* 門口寬度 */
+            height: 80px; /* 門口高度（含扇形半徑） */
+            background-color: transparent;
+            pointer-events: none;
+            z-index: 2; /* 位於食物區之上，防止邊界重疊 */
+        }
+
+        /* 門口的水平實線（門板） */
+        #door-area::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 80px;
+            height: 3px;
+            background-color: #555;
+        }
+
+        /* 門口的扇形弧線（開啟路徑） */
+        #door-area::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 160px; /* 扇形直徑 (2 * radius) */
+            height: 160px; /* 扇形直徑 */
+            border: 2px solid rgba(85, 85, 85, 0.5); /* 弧線顏色，半透明較美觀 */
+            border-radius: 50%;
+            /* 使用 clip-path 只裁剪出右上的 1/4 圓（扇形） */
+            clip-path: polygon(50% 50%, 100% 50%, 100% 0%, 50% 0%);
+        }
+
+        /* 門口區域標示文字 */
+        #door-text {
+            position: absolute;
+            bottom: 10px;
+            left: 20px;
+            color: #555;
+            font-size: 14px;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* 可拖放的物件共同樣式 */
+        .draggable {
+            position: absolute;
+            cursor: grab;
+            touch-action: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 12px;
+            user-select: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 10; 
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+        }
+
+        /* 正方形餐桌 */
+        .table {
+            width: 60px;
+            height: 60px;
+            background-color: #8B4513; 
+            border-radius: 4px;
+        }
+
+        /* 圓形椅子 */
+        .chair {
+            width: 30px;
+            height: 30px;
+            background-color: #4682B4; 
+            border-radius: 50%;
+        }
+
+        .tool-item {
+            position: relative;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🍽️ 但馬屋餐廳平面圖</h1>
+    
+    <div id="toolbox">
+        <span class="toolbox-label">新增傢俬 (點擊並拖曳):</span>
+        <div class="draggable table tool-item" data-type="table">桌</div>
+        <div class="draggable chair tool-item" data-type="chair">椅</div>
+        <div style="margin-left: auto;">
+            <button onclick="clearFloor()" style="padding: 10px 15px; background: #ff4c4c; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">清空平面圖</button>
+        </div>
+    </div>
+
+    <!-- 餐廳平面圖主體 -->
+    <div id="floor-plan">
+        <div id="window-area">玻璃窗</div>
+        <div id="food-area">食物區</div>
+        
+        <!-- 門口結構 -->
+        <div id="door-area"></div>
+        <div id="door-text">門口</div>
+    </div>
+
+    <script>
+        const floorPlan = document.getElementById('floor-plan');
+        let draggedElement = null;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        // 綁定工具箱內物件的觸控/滑鼠按下事件
+        document.querySelectorAll('.tool-item').forEach(item => {
+            item.addEventListener('pointerdown', createNewElement);
+        });
+
+        // 創建新物件到平面圖上
+        function createNewElement(e) {
+            e.preventDefault();
+            
+            const newElem = this.cloneNode(true);
+            newElem.classList.remove('tool-item');
+            
+            const rect = floorPlan.getBoundingClientRect();
+            let startX = e.clientX - rect.left - (this.offsetWidth / 2);
+            let startY = e.clientY - rect.top - (this.offsetHeight / 2);
+
+            newElem.style.left = `${startX}px`;
+            newElem.style.top = `${startY}px`;
+            
+            floorPlan.appendChild(newElem);
+            
+            startDrag(e, newElem);
+            
+            // 為新元素綁定未來的拖曳事件
+            newElem.addEventListener('pointerdown', function(event) {
+                startDrag(event, this);
+            });
+
+            // 點擊兩下刪除該物件
+            newElem.addEventListener('dblclick', function() {
+                this.remove();
+            });
+        }
+
+        // 開始拖曳
+        function startDrag(e, element) {
+            e.preventDefault();
+            draggedElement = element;
+            
+            const rect = element.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+
+            // 拖曳時提升層級，確保不會被遮擋
+            element.style.zIndex = 1000;
+
+            document.addEventListener('pointermove', drag);
+            document.addEventListener('pointerup', stopDrag);
+        }
+
+        // 拖曳中
+        function drag(e) {
+            if (!draggedElement) return;
+            e.preventDefault();
+
+            const rect = floorPlan.getBoundingClientRect();
+            let x = e.clientX - rect.left - offsetX;
+            let y = e.clientY - rect.top - offsetY;
+
+            // 邊界限制保持整個平面圖大小
+            x = Math.max(0, Math.min(x, rect.width - draggedElement.offsetWidth));
+            y = Math.max(0, Math.min(y, rect.height - draggedElement.offsetHeight));
+
+            draggedElement.style.left = `${x}px`;
+            draggedElement.style.top = `${y}px`;
+        }
+
+        // 停止拖曳
+        function stopDrag() {
+            if (draggedElement) {
+                // 放開後恢復原本的層級
+                draggedElement.style.zIndex = 10;
+                draggedElement = null;
+            }
+            document.removeEventListener('pointermove', drag);
+            document.removeEventListener('pointerup', stopDrag);
+        }
+
+        // 清空平面圖
+        function clearFloor() {
+            if(confirm('確定要清空所有桌椅嗎？')) {
+                // 只刪除工具箱生成的 draggable 傢俬，保留背景結構
+                const items = floorPlan.querySelectorAll('.draggable:not(.tool-item)');
+                items.forEach(item => {
+                    if (!['window-area', 'food-area', 'door-area', 'door-text'].includes(item.id)) {
+                        item.remove();
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
