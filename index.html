@@ -3,64 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>但馬屋餐廳平面圖</title>
+    <title>但馬屋餐廳平面圖 (RWD 旋轉版)</title>
     <style>
+        /* 全域樣式優化 */
         body {
             font-family: "PingFang HK", "Microsoft JhengHei", sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             background-color: #f4f4f9;
             display: flex;
             flex-direction: column;
             align-items: center;
-            overscroll-behavior: none; /* 防止 iPad 橡皮筋滾動效果 */
+            overscroll-behavior: none; /* 防止 iPad 橡筋滾動 */
+            box-sizing: border-box;
+            min-height: 100vh;
         }
 
         h1 {
             color: #333;
-            margin-bottom: 10px;
+            margin: 10px 0;
+            font-size: clamp(20px, 5vw, 28px);
+            text-align: center;
         }
 
-        /* 工具箱區域 */
-        #toolbox {
-            width: 90%;
-            max-width: 800px;
-            background: #fff;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        /* 響應式容器 */
+        .container {
+            width: 100%;
+            max-width: 900px;
             display: flex;
-            gap: 20px;
+            flex-direction: column;
             align-items: center;
-            margin-bottom: 20px;
+            gap: 15px;
+            position: relative;
+        }
+
+        /* RWD 工具箱區域 */
+        #toolbox {
+            width: 100%;
+            background: #fff;
+            padding: 12px 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-wrap: wrap; /* 容許在小螢幕上自動折行 */
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
             z-index: 10;
+        }
+
+        .toolbox-left {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
         }
 
         .toolbox-label {
             font-weight: bold;
             color: #555;
+            font-size: clamp(13px, 3.5vw, 16px);
         }
 
         /* 餐廳平面圖區域 */
         #floor-plan {
-            width: 90%;
-            max-width: 800px;
-            height: 600px;
-            background-color: #fff;
-            border: 2px solid #999;
-            border-radius: 10px;
+            width: 100%;
+            aspect-ratio: 4 / 3; /* 鎖定黃金比例 */
+            background-color: #ffffff;
+            border: 3px solid #444;
+            border-radius: 12px;
             position: relative;
             overflow: hidden;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            box-sizing: border-box;
         }
 
-        /* 上方玻璃窗 */
+        /* 1. 響應式：上方玻璃窗 */
         #window-area {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 40px;
+            height: 8%;
             background-color: rgba(135, 206, 235, 0.4); 
             border-bottom: 2px solid #87CEEB;
             display: flex;
@@ -68,182 +93,480 @@
             align-items: center;
             color: #005f87;
             font-weight: bold;
-            letter-spacing: 10px;
-            pointer-events: none; /* 確保不阻擋桌椅拖放 */
+            font-size: clamp(12px, 3vw, 20px);
+            letter-spacing: 1vw;
+            pointer-events: none; 
             z-index: 1;
         }
 
-        /* 左側食物區 */
+        /* 2. 響應式：左側食物區 */
         #food-area {
             position: absolute;
-            top: 40px; 
+            top: 8%; 
             left: 0;
-            width: 100px;
-            /* 高度扣除玻璃窗(40px)和下方的門口高度(80px) */
-            height: calc(100% - 120px); 
+            width: 12%; 
+            height: 74%; 
             background-color: #FFF3E0; 
             border-right: 2px dashed #FFB74D;
-            border-bottom: 2px dashed #FFB74D; /* 底部加上線條與門口區隔 */
+            border-bottom: 2px dashed #FFB74D;
             display: flex;
             justify-content: center;
             align-items: center;
             color: #E65100;
             font-weight: bold;
-            font-size: 18px;
+            font-size: clamp(11px, 2.2vw, 18px);
             writing-mode: vertical-rl; 
-            letter-spacing: 8px;
+            letter-spacing: 0.5vw;
             pointer-events: none; 
             z-index: 1;
         }
 
-        /* 左下角扇形門口 */
+        /* 3. 響應式：左下角精準扇形門口 */
         #door-area {
             position: absolute;
             bottom: 0;
             left: 0;
-            width: 80px; /* 門口寬度 */
-            height: 80px; /* 門口高度（含扇形半徑） */
+            width: 12%; 
+            aspect-ratio: 1 / 1; 
             background-color: transparent;
             pointer-events: none;
-            z-index: 2; /* 位於食物區之上，防止邊界重疊 */
+            z-index: 2;
         }
 
-        /* 門口的水平實線（門板） */
         #door-area::before {
             content: '';
             position: absolute;
             left: 0;
             bottom: 0;
-            width: 80px;
-            height: 3px;
+            width: 3px;
+            height: 100%;
             background-color: #555;
         }
 
-        /* 門口的扇形弧線（開啟路徑） */
         #door-area::after {
             content: '';
             position: absolute;
-            bottom: 0;
+            top: 0;
             left: 0;
-            width: 160px; /* 扇形直徑 (2 * radius) */
-            height: 160px; /* 扇形直徑 */
-            border: 2px solid rgba(85, 85, 85, 0.5); /* 弧線顏色，半透明較美觀 */
-            border-radius: 50%;
-            /* 使用 clip-path 只裁剪出右上的 1/4 圓（扇形） */
-            clip-path: polygon(50% 50%, 100% 50%, 100% 0%, 50% 0%);
+            width: 100%;
+            height: 100%;
+            border-top: 2px dashed rgba(85, 85, 85, 0.6);
+            border-right: 2px dashed rgba(85, 85, 85, 0.6);
+            border-radius: 0 100% 0 0; 
+            box-sizing: border-box;
         }
 
-        /* 門口區域標示文字 */
         #door-text {
             position: absolute;
-            bottom: 10px;
-            left: 20px;
+            bottom: 2%;
+            left: 14%; 
             color: #555;
-            font-size: 14px;
+            font-size: clamp(10px, 1.8vw, 14px);
             font-weight: bold;
             pointer-events: none;
             z-index: 3;
         }
 
-        /* 可拖放的物件共同樣式 */
+        /* 4. 響應式：桌椅組合容器 */
         .draggable {
             position: absolute;
             cursor: grab;
             touch-action: none;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 12px;
-            user-select: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             z-index: 10; 
+            user-select: none;
+            transform-origin: center center; /* 確保旋轉中心點在正中間 */
+            transition: transform 0.1s ease-out; /* 增加流暢的旋轉微動畫 */
         }
 
         .draggable:active {
             cursor: grabbing;
         }
 
-        /* 正方形餐桌 */
-        .table {
-            width: 60px;
-            height: 60px;
-            background-color: #8B4513; 
-            border-radius: 4px;
+        /* 整個四人桌組合的大小比例 */
+        .table-group {
+            width: 14%; 
+            aspect-ratio: 1 / 1;
+            position: absolute;
+            display: block;
         }
 
-        /* 圓形椅子 */
-        .chair {
-            width: 30px;
-            height: 30px;
+        /* 整個二人桌組合的大小比例 */
+        .table-group-2 {
+            width: 14%; 
+            aspect-ratio: 1 / 1;
+            position: absolute;
+            display: block;
+        }
+
+        /* 調整：整個六人桌組合的大小比例 (拉長為 aspect-ratio: 1 / 1.3) */
+        .table-group-3 {
+            width: 14%; 
+            aspect-ratio: 1 / 1.3;
+            position: absolute;
+            display: block;
+        }
+
+        /* 中心的長方形餐桌 (四人桌) */
+        .inner-table {
+            position: absolute;
+            width: 44%;
+            height: 80%;
+            left: 28%;
+            top: 10%;
+            background-color: #8B4513; 
+            border-radius: 8%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: clamp(8px, 1.2vw, 12px);
+            font-weight: bold;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+
+        /* 中心的大正方形餐桌 (二人桌) */
+        .inner-table-2 {
+            position: absolute;
+            width: 46%;
+            height: 46%;
+            left: 27%;
+            top: 27%;
+            background-color: #8B4513; 
+            border-radius: 12%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: clamp(8px, 1.2vw, 12px);
+            font-weight: bold;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+
+        /* 調整：中心加長版長方形餐桌 (六人桌) */
+        .inner-table-3 {
+            position: absolute;
+            width: 44%;
+            height: 88%;
+            left: 28%;
+            top: 6%;
+            background-color: #8B4513; 
+            border-radius: 6%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: clamp(8px, 1.2vw, 12px);
+            font-weight: bold;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+
+        /* 圍繞餐桌的圓形椅子 (改用 aspect-ratio 確保拉長時依然保持正圓) */
+        .inner-chair {
+            position: absolute;
+            width: 22%;
+            aspect-ratio: 1 / 1; 
             background-color: #4682B4; 
             border-radius: 50%;
+            z-index: 1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
         }
 
+        /* 四人桌椅子位置：對邊各兩張 */
+        .chair-left-1 { left: 2%; top: 18%; }
+        .chair-left-2 { left: 2%; top: 60%; }
+        .chair-right-1 { right: 2%; top: 18%; }
+        .chair-right-2 { right: 2%; top: 60%; }
+
+        /* 二人桌椅子位置：對邊各一張 */
+        .chair-left-single { left: 2%; top: 39%; }
+        .chair-right-single { right: 2%; top: 39%; }
+
+        /* 調整：六人桌椅子位置，完美均勻分佈在拉長後的長方形對邊 */
+        .chair-left-3-1 { left: 2%; top: 5%; }
+        .chair-left-3-2 { left: 2%; top: 41.5%; }
+        .chair-left-3-3 { left: 2%; top: 78%; }
+        .chair-right-3-1 { right: 2%; top: 5%; }
+        .chair-right-3-2 { right: 2%; top: 41.5%; }
+        .chair-right-3-3 { right: 2%; top: 78%; }
+
+        /* 物件控制按鈕 (只在平面圖內的傢俬顯示) */
+        .control-btn {
+            display: none; /* 在工具箱預設隱藏 */
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: #ffffff;
+            border: 1.5px solid #444;
+            border-radius: 50%;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 30;
+            touch-action: none;
+        }
+        .control-btn:active {
+            background: #f0f0f0;
+            transform: scale(0.9);
+        }
+        
+        /* 擺放到平面圖中時顯示控制按鈕 */
+        #floor-plan .table-group .control-btn,
+        #floor-plan .table-group-2 .control-btn,
+        #floor-plan .table-group-3 .control-btn {
+            display: flex;
+        }
+
+        /* 刪除按鈕 (左上角) */
+        .delete-btn {
+            left: -8px;
+            top: -8px;
+            color: #ff4c4c;
+        }
+
+        /* 旋轉按鈕 (右上角) */
+        .rotate-btn {
+            right: -8px;
+            top: -8px;
+            color: #4682B4;
+            font-size: 13px;
+        }
+
+        /* 工具箱內靜態傢俬的固定展示大小 */
         .tool-item {
             position: relative;
+            cursor: pointer;
+        }
+        #toolbox .table-group {
+            width: 65px;
+            height: 65px;
+        }
+        #toolbox .table-group-2 {
+            width: 65px;
+            height: 65px;
+        }
+        /* 調整：將工具箱預覽的六人桌高度同步加長，呈現長方形 (65px * 1.3) */
+        #toolbox .table-group-3 {
+            width: 65px;
+            height: 84.5px;
+        }
+
+        /* 按鈕樣式 */
+        .btn-clear {
+            padding: 8px 16px;
+            background: #ff4c4c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: clamp(14px, 3.5vw, 16px);
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-clear:hover {
+            background: #e03b3b;
+        }
+
+        /* 自訂對話框 (Modal) */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease-out;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 80%;
+            max-width: 320px;
+            transform: scale(0.9);
+            transition: transform 0.2s ease-out;
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        .modal-text {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .btn-confirm {
+            padding: 8px 20px;
+            background: #ff4c4c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-cancel {
+            padding: 8px 20px;
+            background: #ccc;
+            color: #333;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
             cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <h1>🍽️ 但馬屋餐廳平面圖</h1>
-    
-    <div id="toolbox">
-        <span class="toolbox-label">新增傢俬 (點擊並拖曳):</span>
-        <div class="draggable table tool-item" data-type="table">桌</div>
-        <div class="draggable chair tool-item" data-type="chair">椅</div>
-        <div style="margin-left: auto;">
-            <button onclick="clearFloor()" style="padding: 10px 15px; background: #ff4c4c; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">清空平面圖</button>
-        </div>
-    </div>
-
-    <!-- 餐廳平面圖主體 -->
-    <div id="floor-plan">
-        <div id="window-area">玻璃窗</div>
-        <div id="food-area">食物區</div>
+    <div class="container">
+        <h1>🍽️ 但馬屋餐廳平面圖</h1>
         
-        <!-- 門口結構 -->
-        <div id="door-area"></div>
-        <div id="door-text">門口</div>
+        <div id="toolbox">
+            <div class="toolbox-left">
+                <span class="toolbox-label">新增傢俬 (點選並拖曳):</span>
+                <!-- 拖放元件：對邊四人桌組合 -->
+                <div class="draggable table-group tool-item" data-type="table-group" data-rotation="0">
+                    <div class="control-btn delete-btn">×</div>
+                    <div class="control-btn rotate-btn">↻</div>
+                    <div class="inner-chair chair-left-1"></div>
+                    <div class="inner-chair chair-left-2"></div>
+                    <div class="inner-chair chair-right-1"></div>
+                    <div class="inner-chair chair-right-2"></div>
+                    <div class="inner-table">4人桌</div>
+                </div>
+
+                <!-- 拖放元件：對邊二人桌組合 -->
+                <div class="draggable table-group-2 tool-item" data-type="table-group-2" data-rotation="0">
+                    <div class="control-btn delete-btn">×</div>
+                    <div class="control-btn rotate-btn">↻</div>
+                    <div class="inner-chair chair-left-single"></div>
+                    <div class="inner-chair chair-right-single"></div>
+                    <div class="inner-table-2">2人桌</div>
+                </div>
+
+                <!-- 拖放元件：對邊六人桌組合 (長度已加長) -->
+                <div class="draggable table-group-3 tool-item" data-type="table-group-3" data-rotation="0">
+                    <div class="control-btn delete-btn">×</div>
+                    <div class="control-btn rotate-btn">↻</div>
+                    <div class="inner-chair chair-left-3-1"></div>
+                    <div class="inner-chair chair-left-3-2"></div>
+                    <div class="inner-chair chair-left-3-3"></div>
+                    <div class="inner-chair chair-right-3-1"></div>
+                    <div class="inner-chair chair-right-3-2"></div>
+                    <div class="inner-chair chair-right-3-3"></div>
+                    <div class="inner-table-3">6人桌</div>
+                </div>
+            </div>
+            <button onclick="showClearModal()" class="btn-clear">清空平面圖</button>
+        </div>
+
+        <!-- 餐廳平面圖主體 -->
+        <div id="floor-plan">
+            <div id="window-area">玻璃窗</div>
+            <div id="food-area">食物區</div>
+            
+            <!-- 精確對齊的門口結構 -->
+            <div id="door-area"></div>
+            <div id="door-text">門口</div>
+
+            <!-- 自訂清除確認框 -->
+            <div id="clear-modal" class="modal-overlay">
+                <div class="modal-content">
+                    <div class="modal-text">確定要清空所有桌椅嗎？</div>
+                    <div class="modal-buttons">
+                        <button onclick="confirmClear()" class="btn-confirm">確定清空</button>
+                        <button onclick="hideClearModal()" class="btn-cancel">取消</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         const floorPlan = document.getElementById('floor-plan');
+        const clearModal = document.getElementById('clear-modal');
         let draggedElement = null;
         let offsetX = 0;
         let offsetY = 0;
 
-        // 綁定工具箱內物件的觸控/滑鼠按下事件
+        // 初始化工具箱物件的觸控與滑鼠事件 (自動套用到六人桌)
         document.querySelectorAll('.tool-item').forEach(item => {
             item.addEventListener('pointerdown', createNewElement);
         });
 
-        // 創建新物件到平面圖上
+        // 點擊/觸控工具箱，生成新物件並開始拖動
         function createNewElement(e) {
             e.preventDefault();
             
             const newElem = this.cloneNode(true);
             newElem.classList.remove('tool-item');
             
+            floorPlan.appendChild(newElem);
+            
             const rect = floorPlan.getBoundingClientRect();
-            let startX = e.clientX - rect.left - (this.offsetWidth / 2);
-            let startY = e.clientY - rect.top - (this.offsetHeight / 2);
+            const elemRect = newElem.getBoundingClientRect();
+            
+            let startX = e.clientX - rect.left - (elemRect.width / 2);
+            let startY = e.clientY - rect.top - (elemRect.height / 2);
 
             newElem.style.left = `${startX}px`;
             newElem.style.top = `${startY}px`;
             
-            floorPlan.appendChild(newElem);
-            
+            // 綁定「旋轉」按鈕事件 (全面相容 2 / 4 / 6 人桌)
+            const rotateBtn = newElem.querySelector('.rotate-btn');
+            if (rotateBtn) {
+                rotateBtn.addEventListener('pointerdown', function(event) {
+                    event.stopPropagation();
+                });
+                rotateBtn.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    let rotation = parseInt(newElem.getAttribute('data-rotation') || '0');
+                    rotation = (rotation + 90) % 360; // 順時針旋轉 90 度
+                    newElem.setAttribute('data-rotation', rotation);
+                    newElem.style.transform = `rotate(${rotation}deg)`;
+                });
+            }
+
+            // 綁定「刪除」按鈕事件
+            const deleteBtn = newElem.querySelector('.delete-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('pointerdown', function(event) {
+                    event.stopPropagation();
+                });
+                deleteBtn.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    newElem.remove();
+                });
+            }
+
             startDrag(e, newElem);
             
-            // 為新元素綁定未來的拖曳事件
             newElem.addEventListener('pointerdown', function(event) {
                 startDrag(event, this);
             });
 
-            // 點擊兩下刪除該物件
+            // 保留雙擊刪除功能
             newElem.addEventListener('dblclick', function() {
                 this.remove();
             });
@@ -251,6 +574,8 @@
 
         // 開始拖曳
         function startDrag(e, element) {
+            if (e.target.classList.contains('control-btn')) return;
+
             e.preventDefault();
             draggedElement = element;
             
@@ -258,7 +583,6 @@
             offsetX = e.clientX - rect.left;
             offsetY = e.clientY - rect.top;
 
-            // 拖曳時提升層級，確保不會被遮擋
             element.style.zIndex = 1000;
 
             document.addEventListener('pointermove', drag);
@@ -274,7 +598,6 @@
             let x = e.clientX - rect.left - offsetX;
             let y = e.clientY - rect.top - offsetY;
 
-            // 邊界限制保持整個平面圖大小
             x = Math.max(0, Math.min(x, rect.width - draggedElement.offsetWidth));
             y = Math.max(0, Math.min(y, rect.height - draggedElement.offsetHeight));
 
@@ -282,10 +605,19 @@
             draggedElement.style.top = `${y}px`;
         }
 
-        // 停止拖曳
+        // 停止拖曳 (將 Px 座標即時轉換為 % 比例鎖定)
         function stopDrag() {
             if (draggedElement) {
-                // 放開後恢復原本的層級
+                const rect = floorPlan.getBoundingClientRect();
+                const leftPx = parseFloat(draggedElement.style.left);
+                const topPx = parseFloat(draggedElement.style.top);
+
+                const leftPercent = (leftPx / rect.width) * 100;
+                const topPercent = (topPx / rect.height) * 100;
+
+                draggedElement.style.left = `${leftPercent}%`;
+                draggedElement.style.top = `${topPercent}%`;
+
                 draggedElement.style.zIndex = 10;
                 draggedElement = null;
             }
@@ -293,17 +625,25 @@
             document.removeEventListener('pointerup', stopDrag);
         }
 
-        // 清空平面圖
-        function clearFloor() {
-            if(confirm('確定要清空所有桌椅嗎？')) {
-                // 只刪除工具箱生成的 draggable 傢俬，保留背景結構
-                const items = floorPlan.querySelectorAll('.draggable:not(.tool-item)');
-                items.forEach(item => {
-                    if (!['window-area', 'food-area', 'door-area', 'door-text'].includes(item.id)) {
-                        item.remove();
-                    }
-                });
-            }
+        // 顯示清除確認 Modal
+        function showClearModal() {
+            clearModal.classList.add('active');
+        }
+
+        // 隱藏清除確認 Modal
+        function hideClearModal() {
+            clearModal.classList.remove('active');
+        }
+
+        // 確定清空平面圖 (能同時清除 2、4、6 人桌，並安全保留背景)
+        function confirmClear() {
+            const items = floorPlan.querySelectorAll('.draggable:not(.tool-item)');
+            items.forEach(item => {
+                if (!['window-area', 'food-area', 'door-area', 'door-text'].includes(item.id)) {
+                    item.remove();
+                }
+            });
+            hideClearModal();
         }
     </script>
 </body>
