@@ -478,7 +478,8 @@
             <!-- 左邊操作區域 -->
             <div class="toolbox-left">
                 <div class="toolbox-header-group">
-                    <span class="toolbox-label">新增餐桌 (點選並拖曳):</span>
+                    <!-- 調整：在原本文字後方，補上「點選餐桌即可旋轉方向」說明字眼 -->
+                    <span class="toolbox-label">新增餐桌 (點選並拖曳)，點選餐桌即可旋轉方向:</span>
                 </div>
                 
                 <!-- 拖放元件列：二、四、六人桌組合，並在最右方放上縮小的清空按鈕 -->
@@ -565,7 +566,7 @@
             item.addEventListener('pointerdown', createNewElement);
         });
 
-        // 更新各類餐桌統計
+        // 更新各類餐桌統計 (修正：改用 data-type 進行絕對精確的比對)
         function updateStatistics() {
             const tables = floorPlan.querySelectorAll('.draggable:not(.tool-item)');
             
@@ -576,11 +577,12 @@
             tables.forEach(table => {
                 if (['window-area', 'food-area', 'door-area', 'door-text'].includes(table.id)) return;
 
-                if (table.classList.contains('table-group-2')) {
+                const type = table.getAttribute('data-type');
+                if (type === 'table-group-2') {
                     count2++;
-                } else if (table.classList.contains('table-group')) {
+                } else if (type === 'table-group') {
                     count4++;
-                } else if (table.classList.contains('table-group-3')) {
+                } else if (type === 'table-group-3') {
                     count6++;
                 }
             });
@@ -641,6 +643,7 @@
             document.addEventListener('pointerup', stopDrag);
         }
 
+        // 拖曳處理
         function drag(e) {
             if (!draggedElement) return;
             e.preventDefault();
@@ -662,6 +665,7 @@
             draggedElement.style.top = `${y}px`;
         }
 
+        // 停止拖曳並轉換成 RWD 百分比單位
         function stopDrag() {
             if (draggedElement) {
                 const rect = floorPlan.getBoundingClientRect();
