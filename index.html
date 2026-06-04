@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>但馬屋餐廳平面圖 (RWD 網格吸附與實時統計版)</title>
+    <title>但馬屋餐廳平面圖 (RWD 自由拖放與實時統計版)</title>
     <style>
         /* 全域樣式優化 */
         body {
@@ -41,7 +41,7 @@
         #toolbox {
             width: 100%;
             background: #fff;
-            padding: 12px 15px;
+            padding: 15px;
             border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
             display: flex;
@@ -53,18 +53,19 @@
             z-index: 10;
         }
 
+        /* 左側操作區：垂直排列 */
         .toolbox-left {
             display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+            min-width: 280px;
         }
 
-        .toolbox-right {
+        .toolbox-header-group {
             display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            align-items: flex-start;
         }
 
         .toolbox-label {
@@ -73,56 +74,59 @@
             font-size: clamp(13px, 3.5vw, 16px);
         }
 
-        /* 網格開關樣式 */
-        .grid-switch-container {
+        /* 餐桌選擇元件列 */
+        .toolbox-items {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            color: #4a5568;
-            cursor: pointer;
-            user-select: none;
-            padding: 6px 12px;
-            background-color: #edf2f7;
-            border-radius: 20px;
-            transition: background-color 0.2s;
-        }
-        .grid-switch-container:hover {
-            background-color: #e2e8f0;
-        }
-        .grid-switch-container input {
-            cursor: pointer;
-            width: 16px;
-            height: 16px;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 5px;
         }
 
-        /* 實時統計儀表板樣式 (已改為橫向融入工具列) */
-        #stats-dashboard {
+        /* 右側統計區 */
+        .toolbox-right {
             display: flex;
             align-items: center;
-            gap: 12px;
+            justify-content: flex-end;
+            min-width: 130px;
+            margin-left: auto; /* 強制推向最右邊 */
+        }
+
+        /* 實時統計儀表板樣式 (直向表格形式，靠右並排) */
+        #stats-dashboard {
+            display: flex;
+            flex-direction: column; /* 直向排列 */
+            gap: 5px;
             background-color: #f1f5f9;
             border: 1px solid #e2e8f0;
-            border-radius: 20px;
-            padding: 6px 16px;
-            font-size: 13px;
+            border-radius: 8px; /* 更加方正和風的表格圓角 */
+            padding: 8px 12px;
+            font-size: 12px;
             font-weight: bold;
             color: #4a5568;
             box-sizing: border-box;
+            width: 100%;
+            max-width: 150px;
         }
 
         .stats-title {
             color: #334155;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 4px;
+            border-bottom: 1px solid #cbd5e1; /* 表格標題下方的分割線 */
+            padding-bottom: 4px;
+            margin-bottom: 2px;
+            font-size: 11px;
+            letter-spacing: 1px;
         }
 
         .stats-row {
             display: flex;
             align-items: center;
-            gap: 4px;
+            justify-content: space-between; /* 標籤與數值左右對齊 */
+            width: 100%;
         }
 
         .stats-highlight {
@@ -148,15 +152,6 @@
             overflow: hidden;
             box-shadow: 0 10px 25px rgba(0,0,0,0.08);
             box-sizing: border-box;
-            transition: background-image 0.2s;
-        }
-
-        /* 啟用網格時的 CSS 繪製背景網格 (5% 步進) */
-        #floor-plan.grid-active {
-            background-size: 5% 5%;
-            background-image: 
-                linear-gradient(to right, rgba(0, 0, 0, 0.06) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
         }
 
         /* 1. 響應式：上方玻璃窗 */
@@ -255,12 +250,11 @@
             z-index: 10; 
             user-select: none;
             transform-origin: center center; /* 確保旋轉中心點在正中間 */
-            transition: transform 0.15s ease-out, left 0.1s ease-out, top 0.1s ease-out; /* 增加流暢的旋轉和吸附微動畫 */
+            transition: transform 0.15s ease-out; /* 增加流暢的旋轉微動畫 */
         }
 
         .draggable:active {
             cursor: grabbing;
-            transition: transform 0.15s ease-out; /* 拖曳時移除位置 transition 以防延遲感 */
         }
 
         /* 整個四人桌組合的大小比例 */
@@ -390,19 +384,25 @@
             height: 84.5px;
         }
 
+        /* 調整：縮小後的清空按鈕樣式 */
         .btn-clear {
-            padding: 8px 16px;
+            padding: 6px 10px; /* 縮小內邊距 */
             background: #ff4c4c;
             color: white;
             border: none;
             border-radius: 6px;
-            font-size: clamp(14px, 3.5vw, 16px);
+            font-size: 12px; /* 縮小字型 */
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.1s;
+            white-space: nowrap;
+            align-self: center; /* 元件內垂直居中 */
         }
         .btn-clear:hover {
             background: #e03b3b;
+        }
+        .btn-clear:active {
+            transform: scale(0.95);
         }
 
         .modal-overlay {
@@ -475,55 +475,59 @@
         <h1>🍽️ 但馬屋餐廳平面圖</h1>
         
         <div id="toolbox">
+            <!-- 左邊操作區域 -->
             <div class="toolbox-left">
-                <span class="toolbox-label">新增餐桌 (點選並拖曳):</span>
-                <!-- 拖放元件：對邊四人桌組合 (經典胡桃木棕色) -->
-                <div class="draggable table-group tool-item" data-type="table-group" data-rotation="0">
-                    <div class="inner-chair chair-left-1"></div>
-                    <div class="inner-chair chair-left-2"></div>
-                    <div class="inner-chair chair-right-1"></div>
-                    <div class="inner-chair chair-right-2"></div>
-                    <div class="inner-table">4人桌</div>
+                <div class="toolbox-header-group">
+                    <span class="toolbox-label">新增餐桌 (點選並拖曳):</span>
                 </div>
+                
+                <!-- 拖放元件列：二、四、六人桌組合，並在最右方放上縮小的清空按鈕 -->
+                <div class="toolbox-items">
+                    <!-- 四人桌 -->
+                    <div class="draggable table-group tool-item" data-type="table-group" data-rotation="0">
+                        <div class="inner-chair chair-left-1"></div>
+                        <div class="inner-chair chair-left-2"></div>
+                        <div class="inner-chair chair-right-1"></div>
+                        <div class="inner-chair chair-right-2"></div>
+                        <div class="inner-table">4人桌</div>
+                    </div>
 
-                <!-- 拖放元件：對邊二人桌組合 (和風抹茶綠色) -->
-                <div class="draggable table-group-2 tool-item" data-type="table-group-2" data-rotation="0">
-                    <div class="inner-chair chair-left-single"></div>
-                    <div class="inner-chair chair-right-single"></div>
-                    <div class="inner-table-2">2人桌</div>
-                </div>
+                    <!-- 二人桌 -->
+                    <div class="draggable table-group-2 tool-item" data-type="table-group-2" data-rotation="0">
+                        <div class="inner-chair chair-left-single"></div>
+                        <div class="inner-chair chair-right-single"></div>
+                        <div class="inner-table-2">2人桌</div>
+                    </div>
 
-                <!-- 拖放元件：對邊六人桌組合 (深紫色) -->
-                <div class="draggable table-group-3 tool-item" data-type="table-group-3" data-rotation="0">
-                    <div class="inner-chair chair-left-3-1"></div>
-                    <div class="inner-chair chair-left-3-2"></div>
-                    <div class="inner-chair chair-left-3-3"></div>
-                    <div class="inner-chair chair-right-3-1"></div>
-                    <div class="inner-chair chair-right-3-2"></div>
-                    <div class="inner-chair chair-right-3-3"></div>
-                    <div class="inner-table-3">6人桌</div>
+                    <!-- 六人桌 -->
+                    <div class="draggable table-group-3 tool-item" data-type="table-group-3" data-rotation="0">
+                        <div class="inner-chair chair-left-3-1"></div>
+                        <div class="inner-chair chair-left-3-2"></div>
+                        <div class="inner-chair chair-left-3-3"></div>
+                        <div class="inner-chair chair-right-3-1"></div>
+                        <div class="inner-chair chair-right-3-2"></div>
+                        <div class="inner-chair chair-right-3-3"></div>
+                        <div class="inner-table-3">6人桌</div>
+                    </div>
+
+                    <!-- 調整：縮小後的清空按鈕放置於 6 人桌旁 -->
+                    <button onclick="showClearModal()" class="btn-clear">清空平面圖</button>
                 </div>
             </div>
             
+            <!-- 右邊統計區域 -->
             <div class="toolbox-right">
-                <!-- 實時數據統計儀表板 (已改為橫向排列並放於工具版右方) -->
+                <!-- 實時數據統計儀表板 (直向表格，靠最右側對齊) -->
                 <div id="stats-dashboard">
-                    <div class="stats-title">📊 數量:</div>
-                    <div class="stats-row"><span>🟢 二人</span><span id="stats-count-2" class="stats-highlight">0</span></div>
-                    <div class="stats-row"><span>🟫 四人</span><span id="stats-count-4" class="stats-highlight">0</span></div>
-                    <div class="stats-row"><span>🟣 六人</span><span id="stats-count-6" class="stats-highlight">0</span></div>
+                    <div class="stats-title">📊 數量統計</div>
+                    <div class="stats-row"><span>🟢 二人桌</span><span id="stats-count-2" class="stats-highlight">0</span></div>
+                    <div class="stats-row"><span>🟫 四人桌</span><span id="stats-count-4" class="stats-highlight">0</span></div>
+                    <div class="stats-row"><span>🟣 六人桌</span><span id="stats-count-6" class="stats-highlight">0</span></div>
                 </div>
-
-                <!-- 顯示網格與自動吸附開關 -->
-                <label class="grid-switch-container">
-                    <input type="checkbox" id="grid-toggle" checked onchange="toggleGrid()">
-                    <span>自動網格對齊 (5%)</span>
-                </label>
-                <button onclick="showClearModal()" class="btn-clear">清空平面圖</button>
             </div>
         </div>
 
-        <div id="floor-plan" class="grid-active">
+        <div id="floor-plan">
             <div id="window-area">玻璃窗</div>
             <div id="food-area">食物區</div>
             
@@ -546,7 +550,6 @@
     <script>
         const floorPlan = document.getElementById('floor-plan');
         const clearModal = document.getElementById('clear-modal');
-        const gridToggle = document.getElementById('grid-toggle');
         
         let draggedElement = null;
         let offsetX = 0;
@@ -585,18 +588,6 @@
             document.getElementById('stats-count-2').textContent = count2;
             document.getElementById('stats-count-4').textContent = count4;
             document.getElementById('stats-count-6').textContent = count6;
-        }
-
-        function toggleGrid() {
-            if (gridToggle.checked) {
-                floorPlan.classList.add('grid-active');
-            } else {
-                floorPlan.classList.remove('grid-active');
-            }
-        }
-
-        function snapToGrid(value, step) {
-            return Math.round(value / step) * step;
         }
 
         function createNewElement(e) {
@@ -674,25 +665,20 @@
         function stopDrag() {
             if (draggedElement) {
                 const rect = floorPlan.getBoundingClientRect();
-                const leftPx = parseFloat(draggedElement.style.left);
-                const topPx = parseFloat(draggedElement.style.top);
+                const currentLeft = draggedElement.style.left;
+                const currentTop = draggedElement.style.top;
 
-                let leftPercent = (leftPx / rect.width) * 100;
-                let topPercent = (topPx / rect.height) * 100;
+                // 只有在位置是以 px 表示時，才進行百分比轉換
+                if (currentLeft.includes('px')) {
+                    const leftPx = parseFloat(currentLeft);
+                    const topPx = parseFloat(currentTop);
 
-                if (gridToggle.checked && hasDragged) {
-                    leftPercent = snapToGrid(leftPercent, 5);
-                    topPercent = snapToGrid(topPercent, 5);
+                    let leftPercent = (leftPx / rect.width) * 100;
+                    let topPercent = (topPx / rect.height) * 100;
 
-                    const elementWidthPercent = (draggedElement.offsetWidth / rect.width) * 100;
-                    const elementHeightPercent = (draggedElement.offsetHeight / rect.height) * 100;
-
-                    leftPercent = Math.max(0, Math.min(leftPercent, 100 - elementWidthPercent));
-                    topPercent = Math.max(0, Math.min(topPercent, 100 - elementHeightPercent));
+                    draggedElement.style.left = `${leftPercent}%`;
+                    draggedElement.style.top = `${topPercent}%`;
                 }
-
-                draggedElement.style.left = `${leftPercent}%`;
-                draggedElement.style.top = `${topPercent}%`;
 
                 if (!hasDragged) {
                     let rotation = parseInt(draggedElement.getAttribute('data-rotation') || '0');
