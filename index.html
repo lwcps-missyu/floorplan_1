@@ -51,6 +51,13 @@
             justify-content: space-between;
             box-sizing: border-box;
             z-index: 10;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* 當餐桌拖曳至工具列上方時的紅粉色視覺反饋 */
+        #toolbox.drag-over-delete {
+            background-color: #ffeef0 !important;
+            box-shadow: 0 4px 15px rgba(255, 76, 76, 0.25), inset 0 0 0 2px #ff4c4c !important;
         }
 
         /* 左側操作區：垂直排列 */
@@ -478,8 +485,8 @@
             <!-- 左邊操作區域 -->
             <div class="toolbox-left">
                 <div class="toolbox-header-group">
-                    <!-- 調整：在原本文字後方，補上「點選餐桌即可旋轉方向」說明字眼 -->
-                    <span class="toolbox-label">新增餐桌 (點選並拖曳)，點選餐桌即可旋轉方向:</span>
+                    <!-- 調整：在原本文字後方，補上「拖回工具列清除餐桌」說明字眼 -->
+                    <span class="toolbox-label">新增餐桌 (點選並拖曳)，點選餐桌即可旋轉方向，拖回工具列清除餐桌:</span>
                 </div>
                 
                 <!-- 拖放元件列：二、四、六人桌組合，並在最右方放上縮小的清空按鈕 -->
@@ -615,12 +622,7 @@
                 startDrag(event, this);
             });
 
-            newElem.addEventListener('dblclick', function() {
-                this.remove();
-                updateStatistics();
-            });
-
-            updateStatistics();
+            // 已完全移除 dblclick 雙擊事件
         }
 
         function startDrag(e, element) {
@@ -663,12 +665,47 @@
 
             draggedElement.style.left = `${x}px`;
             draggedElement.style.top = `${y}px`;
+
+            // 實時檢測指針是否進入工具列，並觸發視覺提示效果
+            const toolbox = document.getElementById('toolbox');
+            const toolboxRect = toolbox.getBoundingClientRect();
+            if (e.clientX >= toolboxRect.left && e.clientX <= toolboxRect.right &&
+                e.clientY >= toolboxRect.top && e.clientY <= toolboxRect.bottom) {
+                toolbox.classList.add('drag-over-delete');
+            } else {
+                toolbox.classList.remove('drag-over-delete');
+            }
         }
 
-        // 停止拖曳並轉換成 RWD 百分比單位
-        function stopDrag() {
+        // 停止拖曳並轉換成 RWD 百分比單位，並處理回收或旋轉
+        function stopDrag(e) {
             if (draggedElement) {
+                const toolbox = document.getElementById('toolbox');
+                toolbox.classList.remove('drag-over-delete'); // 移除拖曳警告樣式
+
                 const rect = floorPlan.getBoundingClientRect();
+                const toolboxRect = toolbox.getBoundingClientRect();
+
+                // 檢查指針釋放的位置是否在工具列內部 (拖曳回到工具列清除)
+                const releaseX = e.clientX;
+                const releaseY = e.clientY;
+
+                const droppedInToolbox = (
+                    releaseX >= toolboxRect.left &&
+                    releaseX <= toolboxRect.right &&
+                    releaseY >= toolboxRect.top &&
+                    releaseY <= toolboxRect.bottom
+                );
+
+                if (droppedInToolbox) {
+                    draggedElement.remove();
+                    draggedElement = null;
+                    updateStatistics(); // 實時更新數量統計
+                    document.removeEventListener('pointermove', drag);
+                    document.removeEventListener('pointerup', stopDrag);
+                    return;
+                }
+
                 const currentLeft = draggedElement.style.left;
                 const currentTop = draggedElement.style.top;
 
@@ -677,6 +714,16 @@
                     const leftPx = parseFloat(currentLeft);
                     const topPx = parseFloat(currentTop);
 
+                    // 備用安全檢查：如果釋放時的位置在平面圖外部，也直接移除
+                    if (topPx < 0 || leftPx < 0 || leftPx > rect.width || topPx > rect.height) {
+                        draggedElement.remove();
+                        draggedElement = null;
+                        updateStatistics(); // 確保重新整理統計數據
+                        document.removeEventListener('pointermove', drag);
+                        document.removeEventListener('pointerup', stopDrag);
+                        return;
+                    }
+
                     let leftPercent = (leftPx / rect.width) * 100;
                     let topPercent = (topPx / rect.height) * 100;
 
@@ -684,6 +731,7 @@
                     draggedElement.style.top = `${topPercent}%`;
                 }
 
+                // 單擊時（無拖曳位移）觸發旋轉
                 if (!hasDragged) {
                     let rotation = parseInt(draggedElement.getAttribute('data-rotation') || '0');
                     rotation = (rotation + 90) % 360;
@@ -693,6 +741,9 @@
 
                 draggedElement.style.zIndex = 10;
                 draggedElement = null;
+
+                // 只有在成功擺放或旋轉完成後，才更新統計，避免幽靈物件問題
+                updateStatistics();
             }
             document.removeEventListener('pointermove', drag);
             document.removeEventListener('pointerup', stopDrag);
