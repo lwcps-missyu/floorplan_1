@@ -153,6 +153,11 @@
             width: 100%;
             aspect-ratio: 4 / 3; /* 鎖定黃金比例 */
             background-color: #ffffff;
+            /* 新增：和風極簡淡灰色輔助網格背景，每格 5%，幫助手動排版完美對齊 */
+            background-size: 5% 5%;
+            background-image: 
+                linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
             border: 3px solid #444;
             border-radius: 12px;
             position: relative;
@@ -485,7 +490,6 @@
             <!-- 左邊操作區域 -->
             <div class="toolbox-left">
                 <div class="toolbox-header-group">
-                    <!-- 調整：在原本文字後方，補上「拖回工具列清除餐桌」說明字眼 -->
                     <span class="toolbox-label">新增餐桌 (點選並拖曳)，點選餐桌即可旋轉方向，拖回工具列清除餐桌:</span>
                 </div>
                 
@@ -518,19 +522,23 @@
                         <div class="inner-table-3">6人桌</div>
                     </div>
 
-                    <!-- 調整：縮小後的清空按鈕放置於 6 人桌旁 -->
+                    <!-- 縮小後的清空按鈕放置於 6 人桌旁 -->
                     <button onclick="showClearModal()" class="btn-clear">清空平面圖</button>
                 </div>
             </div>
             
             <!-- 右邊統計區域 -->
             <div class="toolbox-right">
-                <!-- 實時數據統計儀表板 (直向表格，靠最右側對齊) -->
+                <!-- 實時數據統計儀表板 (直向表格，靠最右側對齊，已另加一列顯示總食客人數) -->
                 <div id="stats-dashboard">
                     <div class="stats-title">📊 數量統計</div>
                     <div class="stats-row"><span>🟢 二人桌</span><span id="stats-count-2" class="stats-highlight">0</span></div>
                     <div class="stats-row"><span>🟫 四人桌</span><span id="stats-count-4" class="stats-highlight">0</span></div>
                     <div class="stats-row"><span>🟣 六人桌</span><span id="stats-count-6" class="stats-highlight">0</span></div>
+                    <!-- 總食客數統計列，帶虛線分割與高對比紅色字體 -->
+                    <div class="stats-row" style="border-top: 1px dashed #cbd5e1; padding-top: 5px; margin-top: 3px;">
+                        <span>👥 總食客</span><span id="stats-total-seats" class="stats-highlight" style="color: #ff4c4c;">0</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -573,7 +581,7 @@
             item.addEventListener('pointerdown', createNewElement);
         });
 
-        // 更新各類餐桌統計 (修正：改用 data-type 進行絕對精確的比對)
+        // 更新各類餐桌統計 (修正：改用 data-type 進行絕對精確的比對，並另加計算總食客人數)
         function updateStatistics() {
             const tables = floorPlan.querySelectorAll('.draggable:not(.tool-item)');
             
@@ -594,9 +602,13 @@
                 }
             });
 
+            // 計算總食客座位數： 2人桌*2 + 4人桌*4 + 6人桌*6
+            const totalSeats = (count2 * 2) + (count4 * 4) + (count6 * 6);
+
             document.getElementById('stats-count-2').textContent = count2;
             document.getElementById('stats-count-4').textContent = count4;
             document.getElementById('stats-count-6').textContent = count6;
+            document.getElementById('stats-total-seats').textContent = totalSeats;
         }
 
         function createNewElement(e) {
@@ -621,8 +633,6 @@
             newElem.addEventListener('pointerdown', function(event) {
                 startDrag(event, this);
             });
-
-            // 已完全移除 dblclick 雙擊事件
         }
 
         function startDrag(e, element) {
@@ -753,6 +763,7 @@
             clearModal.classList.add('active');
         }
 
+        // 隱藏清除確認 Modal
         function hideClearModal() {
             clearModal.classList.remove('active');
         }
